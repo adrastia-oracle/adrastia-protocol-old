@@ -94,15 +94,19 @@ contract IncentivizedUpdating is AccessControl, ReentrancyGuard {
      */
 
     function whitelistUpdateable(IUpdateByToken updateable, bool whitelist) external onlyRole(WHITELIST_MAINTAINER) {
-        whitelistedUpdateables[updateable] = whitelist;
+        if (whitelistedUpdateables[updateable] != whitelist) {
+            whitelistedUpdateables[updateable] = whitelist;
 
-        emit UpdatedWhitelistedUpdateable(updateable, whitelist);
+            emit UpdatedWhitelistedUpdateable(updateable, whitelist);
+        }
     }
 
     function whitelistToken(IERC20 token, bool whitelist) external onlyRole(WHITELIST_MAINTAINER) {
-        whitelistedTokens[token] = whitelist;
+        if (whitelistedTokens[token] != whitelist) {
+            whitelistedTokens[token] = whitelist;
 
-        emit UpdatedWhitelistedToken(token, whitelist);
+            emit UpdatedWhitelistedToken(token, whitelist);
+        }
     }
 
     /*
