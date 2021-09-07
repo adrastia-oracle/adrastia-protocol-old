@@ -22,6 +22,8 @@ contract IncentivizedUpdating is AccessControl, ReentrancyGuard {
 
     bytes32 public constant INCENTIVE_MAINTAINER = keccak256("INCENTIVE_MAINTAINER");
 
+    bytes32 public constant WHITELIST_MAINTAINER = keccak256("WHITELIST_MAINTAINER");
+
     /*
      * Whitelists
      */
@@ -88,16 +90,16 @@ contract IncentivizedUpdating is AccessControl, ReentrancyGuard {
     event UpdatedWhitelistedToken(IERC20 indexed token, bool whitelisted);
 
     /*
-     * External functions - ADMIN_ROLE - whitelist
+     * External functions - WHITELIST_MAINTAINER - whitelist
      */
 
-    function whitelistUpdateable(IUpdateByToken updateable, bool whitelist) external onlyRole(ADMIN_ROLE) {
+    function whitelistUpdateable(IUpdateByToken updateable, bool whitelist) external onlyRole(WHITELIST_MAINTAINER) {
         whitelistedUpdateables[updateable] = whitelist;
 
         emit UpdatedWhitelistedUpdateable(updateable, whitelist);
     }
 
-    function whitelistToken(IERC20 token, bool whitelist) external onlyRole(ADMIN_ROLE) {
+    function whitelistToken(IERC20 token, bool whitelist) external onlyRole(WHITELIST_MAINTAINER) {
         whitelistedTokens[token] = whitelist;
 
         emit UpdatedWhitelistedToken(token, whitelist);
