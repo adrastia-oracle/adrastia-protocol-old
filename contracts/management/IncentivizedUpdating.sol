@@ -3,26 +3,20 @@ pragma solidity ^0.8;
 
 import "@pythia-oracle/pythia-library/contracts/interfaces/IUpdateByToken.sol";
 
-import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-contract IncentivizedUpdating is AccessControl, ReentrancyGuard {
+import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+
+contract IncentivizedUpdatingStorageV1 {
     struct Incentive {
         bool enabled;
         IERC20 compensationToken;
         uint256 amountPerLitreGas;
     }
 
-    /*
-     * Roles
-     */
-
-    bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
-
-    bytes32 public constant INCENTIVE_MAINTAINER = keccak256("INCENTIVE_MAINTAINER");
-
-    bytes32 public constant WHITELIST_MAINTAINER = keccak256("WHITELIST_MAINTAINER");
+    uint256 version;
 
     /*
      * Whitelists
@@ -47,6 +41,26 @@ contract IncentivizedUpdating is AccessControl, ReentrancyGuard {
      */
 
     mapping(IERC20 => Incentive[]) public incentivesForToken;
+}
+
+contract IncentivizedUpdating is
+    Initializable,
+    AccessControlUpgradeable,
+    ReentrancyGuardUpgradeable,
+    UUPSUpgradeable,
+    IncentivizedUpdatingStorageV1
+{
+    /*
+     * Constants - roles
+     */
+
+    bytes32 public constant SUPER_ROLE = keccak256("SUPER_ROLE");
+
+    bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
+
+    bytes32 public constant INCENTIVE_MAINTAINER = keccak256("INCENTIVE_MAINTAINER");
+
+    bytes32 public constant WHITELIST_MAINTAINER = keccak256("WHITELIST_MAINTAINER");
 
     /*
      * Events - update handling
@@ -88,6 +102,18 @@ contract IncentivizedUpdating is AccessControl, ReentrancyGuard {
     event UpdatedWhitelistedUpdateable(IUpdateByToken indexed updateable, bool whitelisted);
 
     event UpdatedWhitelistedToken(IERC20 indexed token, bool whitelisted);
+
+    /*
+     * Initializers
+     */
+
+    function initialize() public initializer {
+        __AccessControl_init();
+        __ReentrancyGuard_init();
+        __UUPSUpgradeable_init();
+
+        version = 1;
+    }
 
     /*
      * External functions - WHITELIST_MAINTAINER - whitelist
@@ -419,4 +445,6 @@ contract IncentivizedUpdating is AccessControl, ReentrancyGuard {
 
         revert("IncentivizedUpdating: INCENTIVE_DOESNT_EXIST");
     }
+
+    function _authorizeUpgrade(address) internal override onlyRole(SUPER_ROLE) {}
 }
