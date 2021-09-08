@@ -43,15 +43,7 @@ contract IncentivizedUpdatingStorageV1 {
      */
 
     mapping(IERC20 => Incentive[]) public incentivesForToken;
-}
 
-contract IncentivizedUpdating is
-    Initializable,
-    AccessControlUpgradeable,
-    ReentrancyGuardUpgradeable,
-    UUPSUpgradeable,
-    IncentivizedUpdatingStorageV1
-{
     /*
      * Events - update handling
      */
@@ -92,7 +84,15 @@ contract IncentivizedUpdating is
     event UpdatedWhitelistedUpdateable(IUpdateByToken indexed updateable, bool whitelisted);
 
     event UpdatedWhitelistedToken(IERC20 indexed token, bool whitelisted);
+}
 
+contract IncentivizedUpdating is
+    Initializable,
+    AccessControlUpgradeable,
+    ReentrancyGuardUpgradeable,
+    UUPSUpgradeable,
+    IncentivizedUpdatingStorageV1
+{
     /*
      * Constructors and initializers
      */
