@@ -28,7 +28,9 @@ abstract contract IGovernorTimelockUpgradeable is Initializable, IGovernorUpgrad
         address[] memory targets,
         uint256[] memory values,
         bytes[] memory calldatas,
-        bytes32 descriptionHash
+        bytes32 descriptionHash,
+        bytes32 roleHash,
+        uint256 voteType
     ) public virtual returns (uint256 proposalId);
 
     uint256[50] private __gap;

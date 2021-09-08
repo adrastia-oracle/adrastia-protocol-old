@@ -5,6 +5,7 @@ pragma solidity ^0.8.0;
 import "./IGovernorTimelockUpgradeable.sol";
 import "../GovernorUpgradeable.sol";
 import "../TimelockControllerUpgradeable.sol";
+import "../GovernorRoles.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 /**
@@ -111,9 +112,11 @@ abstract contract GovernorTimelockControlUpgradeable is
         address[] memory targets,
         uint256[] memory values,
         bytes[] memory calldatas,
-        bytes32 descriptionHash
+        bytes32 descriptionHash,
+        bytes32 roleHash,
+        uint256 voteType
     ) public virtual override returns (uint256) {
-        uint256 proposalId = hashProposal(targets, values, calldatas, descriptionHash);
+        uint256 proposalId = hashProposal(targets, values, calldatas, descriptionHash, roleHash, voteType);
 
         require(state(proposalId) == ProposalState.Succeeded, "Governor: proposal not successful");
 
@@ -134,7 +137,8 @@ abstract contract GovernorTimelockControlUpgradeable is
         address[] memory targets,
         uint256[] memory values,
         bytes[] memory calldatas,
-        bytes32 descriptionHash
+        bytes32 descriptionHash,
+        bytes32 roleHash
     ) internal virtual override {
         _timelock.executeBatch{value: msg.value}(targets, values, calldatas, 0, descriptionHash);
     }
@@ -147,9 +151,11 @@ abstract contract GovernorTimelockControlUpgradeable is
         address[] memory targets,
         uint256[] memory values,
         bytes[] memory calldatas,
-        bytes32 descriptionHash
+        bytes32 descriptionHash,
+        bytes32 roleHash,
+        uint256 voteType
     ) internal virtual override returns (uint256) {
-        uint256 proposalId = super._cancel(targets, values, calldatas, descriptionHash);
+        uint256 proposalId = super._cancel(targets, values, calldatas, descriptionHash, roleHash, voteType);
 
         if (_timelockIds[proposalId] != 0) {
             _timelock.cancel(_timelockIds[proposalId]);
@@ -162,7 +168,7 @@ abstract contract GovernorTimelockControlUpgradeable is
     /**
      * @dev Address through which the governor executes action. In this case, the timelock.
      */
-    function _executor() internal view virtual override returns (address) {
+    function _executor(bytes32 roleHash) internal view virtual override returns (address) {
         return address(_timelock);
     }
 
@@ -170,7 +176,11 @@ abstract contract GovernorTimelockControlUpgradeable is
      * @dev Public endpoint to update the underlying timelock instance. Restricted to the timelock itself, so updates
      * must be proposed, scheduled and executed using the {Governor} workflow.
      */
-    function updateTimelock(TimelockControllerUpgradeable newTimelock) external virtual onlyGovernance {
+    function updateTimelock(TimelockControllerUpgradeable newTimelock)
+        external
+        virtual
+        onlyExecutionRole(GovernorRoles.SUPER)
+    {
         _updateTimelock(newTimelock);
     }
 

@@ -27,14 +27,16 @@ abstract contract GovernorProposalThresholdUpgradeable is Initializable, Governo
         address[] memory targets,
         uint256[] memory values,
         bytes[] memory calldatas,
-        string memory description
+        string memory description,
+        string memory executionRole,
+        uint256 voteType
     ) public virtual override returns (uint256) {
         require(
-            getVotes(msg.sender, block.number - 1) >= proposalThreshold(),
+            getVotes(msg.sender, block.number - 1, keccak256(bytes(executionRole)), voteType) >= proposalThreshold(),
             "GovernorCompatibilityBravo: proposer votes below proposal threshold"
         );
 
-        return super.propose(targets, values, calldatas, description);
+        return super.propose(targets, values, calldatas, description, executionRole, voteType);
     }
 
     /**

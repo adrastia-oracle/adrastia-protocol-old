@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: MIT
-
-pragma solidity ^0.8.0;
+pragma solidity ^0.8;
 
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
@@ -40,7 +39,9 @@ abstract contract IGovernorUpgradeable is Initializable, IERC165Upgradeable {
         bytes[] calldatas,
         uint256 startBlock,
         uint256 endBlock,
-        string description
+        string description,
+        string executionRole,
+        uint256 voteType
     );
 
     /**
@@ -58,7 +59,7 @@ abstract contract IGovernorUpgradeable is Initializable, IERC165Upgradeable {
      *
      * Note: `support` values should be seen as buckets. There interpretation depends on the voting module used.
      */
-    event VoteCast(address indexed voter, uint256 proposalId, uint8 support, uint256 weight, string reason);
+    event VoteCast(address indexed voter, uint256 proposalId, uint256 option, uint256 weight, string reason);
 
     /**
      * @notice module:core
@@ -89,7 +90,7 @@ abstract contract IGovernorUpgradeable is Initializable, IERC165Upgradeable {
      * JavaScript class.
      */
     // solhint-disable-next-line func-name-mixedcase
-    function COUNTING_MODE() public pure virtual returns (string memory);
+    function COUNTING_MODE(string memory executionRole, uint256 voteType) public pure virtual returns (string memory);
 
     /**
      * @notice module:core
@@ -99,7 +100,9 @@ abstract contract IGovernorUpgradeable is Initializable, IERC165Upgradeable {
         address[] calldata targets,
         uint256[] calldata values,
         bytes[] calldata calldatas,
-        bytes32 descriptionHash
+        bytes32 descriptionHash,
+        bytes32 roleHash,
+        uint256 voteType
     ) public pure virtual returns (uint256);
 
     /**
@@ -125,7 +128,7 @@ abstract contract IGovernorUpgradeable is Initializable, IERC165Upgradeable {
      * @dev delay, in number of block, between the proposal is created and the vote starts. This can be increassed to
      * leave time for users to buy voting power, of delegate it, before the voting of a proposal starts.
      */
-    function votingDelay() public view virtual returns (uint256);
+    function votingDelay(string memory executionRole) public view virtual returns (uint256);
 
     /**
      * @notice module:user-config
@@ -134,7 +137,7 @@ abstract contract IGovernorUpgradeable is Initializable, IERC165Upgradeable {
      * Note: the {votingDelay} can delay the start of the vote. This must be considered when setting the voting
      * duration compared to the voting delay.
      */
-    function votingPeriod() public view virtual returns (uint256);
+    function votingPeriod(string memory executionRole) public view virtual returns (uint256);
 
     /**
      * @notice module:user-config
@@ -143,16 +146,26 @@ abstract contract IGovernorUpgradeable is Initializable, IERC165Upgradeable {
      * Note: The `blockNumber` parameter corresponds to the snaphot used for counting vote. This allows to scale the
      * quroum depending on values such as the totalSupply of a token at this block (see {ERC20Votes}).
      */
-    function quorum(uint256 blockNumber) public view virtual returns (uint256);
+    function quorum(
+        uint256 blockNumber,
+        bytes32 roleHash,
+        uint256 voteType
+    ) public view virtual returns (uint256);
 
     /**
      * @notice module:reputation
      * @dev Voting power of an `account` at a specific `blockNumber`.
+     * @dev executionRole can be used to change voting weights or aggregation formula based on executor
      *
      * Note: this can be implemented in a number of ways, for example by reading the delegated balance from one (or
      * multiple), {ERC20Votes} tokens.
      */
-    function getVotes(address account, uint256 blockNumber) public view virtual returns (uint256);
+    function getVotes(
+        address account,
+        uint256 blockNumber,
+        bytes32 roleHash,
+        uint256 voteType
+    ) public view virtual returns (uint256);
 
     /**
      * @notice module:voting
@@ -170,7 +183,9 @@ abstract contract IGovernorUpgradeable is Initializable, IERC165Upgradeable {
         address[] memory targets,
         uint256[] memory values,
         bytes[] memory calldatas,
-        string memory description
+        string memory description,
+        string memory executionRole,
+        uint256 voteType
     ) public virtual returns (uint256 proposalId);
 
     /**
@@ -185,7 +200,9 @@ abstract contract IGovernorUpgradeable is Initializable, IERC165Upgradeable {
         address[] memory targets,
         uint256[] memory values,
         bytes[] memory calldatas,
-        bytes32 descriptionHash
+        bytes32 descriptionHash,
+        bytes32 roleHash,
+        uint256 voteType
     ) public payable virtual returns (uint256 proposalId);
 
     /**
@@ -193,7 +210,7 @@ abstract contract IGovernorUpgradeable is Initializable, IERC165Upgradeable {
      *
      * Emits a {VoteCast} event.
      */
-    function castVote(uint256 proposalId, uint8 support) public virtual returns (uint256 balance);
+    function castVote(uint256 proposalId, uint256 option) public virtual returns (uint256 balance);
 
     /**
      * @dev Cast a with a reason
@@ -202,7 +219,7 @@ abstract contract IGovernorUpgradeable is Initializable, IERC165Upgradeable {
      */
     function castVoteWithReason(
         uint256 proposalId,
-        uint8 support,
+        uint256 option,
         string calldata reason
     ) public virtual returns (uint256 balance);
 
@@ -213,7 +230,7 @@ abstract contract IGovernorUpgradeable is Initializable, IERC165Upgradeable {
      */
     function castVoteBySig(
         uint256 proposalId,
-        uint8 support,
+        uint256 option,
         uint8 v,
         bytes32 r,
         bytes32 s
