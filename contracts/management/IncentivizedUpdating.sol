@@ -236,8 +236,9 @@ contract IncentivizedUpdating is
         Incentive[] memory currentIncentives = incentivesForToken[token];
 
         // Clear the current incentives
-        incentivesForToken[token] = new Incentive[](0);
+        delete incentivesForToken[token];
 
+        // Copy over the incentives we want to keep
         for (uint256 i = 0; i < currentIncentives.length; ++i) {
             if (address(currentIncentives[i].compensationToken) != address(compensationToken)) {
                 // Add back this incentive as it's not the one we are removing
