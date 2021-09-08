@@ -9,6 +9,8 @@ import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol"
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
+import "../governance/Roles.sol";
+
 contract IncentivizedUpdatingStorageV1 {
     struct Incentive {
         bool enabled;
@@ -50,18 +52,6 @@ contract IncentivizedUpdating is
     UUPSUpgradeable,
     IncentivizedUpdatingStorageV1
 {
-    /*
-     * Constants - roles
-     */
-
-    bytes32 public constant SUPER_ROLE = keccak256("SUPER_ROLE");
-
-    bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
-
-    bytes32 public constant INCENTIVE_MAINTAINER = keccak256("INCENTIVE_MAINTAINER");
-
-    bytes32 public constant WHITELIST_MAINTAINER = keccak256("WHITELIST_MAINTAINER");
-
     /*
      * Events - update handling
      */
@@ -118,16 +108,16 @@ contract IncentivizedUpdating is
         __UUPSUpgradeable_init();
 
         // Set up administration roles
-        _setRoleAdmin(SUPER_ROLE, SUPER_ROLE);
-        _setRoleAdmin(ADMIN_ROLE, SUPER_ROLE);
-        _setRoleAdmin(INCENTIVE_MAINTAINER, ADMIN_ROLE);
-        _setRoleAdmin(WHITELIST_MAINTAINER, ADMIN_ROLE);
+        _setRoleAdmin(Roles.SUPER, Roles.SUPER);
+        _setRoleAdmin(Roles.ADMIN, Roles.SUPER);
+        _setRoleAdmin(Roles.INCENTIVE_MAINTAINER, Roles.ADMIN);
+        _setRoleAdmin(Roles.WHITELIST_MAINTAINER, Roles.ADMIN);
 
         // Setup roles
-        _setupRole(SUPER_ROLE, superUser);
-        _setupRole(ADMIN_ROLE, admin);
-        _setupRole(INCENTIVE_MAINTAINER, whitelister);
-        _setupRole(WHITELIST_MAINTAINER, incentiveMaintainer);
+        _setupRole(Roles.SUPER, superUser);
+        _setupRole(Roles.ADMIN, admin);
+        _setupRole(Roles.INCENTIVE_MAINTAINER, whitelister);
+        _setupRole(Roles.WHITELIST_MAINTAINER, incentiveMaintainer);
 
         version = 1;
     }
@@ -136,7 +126,10 @@ contract IncentivizedUpdating is
      * External functions - WHITELIST_MAINTAINER - whitelist
      */
 
-    function whitelistUpdateable(IUpdateByToken updateable, bool whitelist) external onlyRole(WHITELIST_MAINTAINER) {
+    function whitelistUpdateable(IUpdateByToken updateable, bool whitelist)
+        external
+        onlyRole(Roles.WHITELIST_MAINTAINER)
+    {
         if (whitelistedUpdateables[updateable] != whitelist) {
             whitelistedUpdateables[updateable] = whitelist;
 
@@ -144,7 +137,7 @@ contract IncentivizedUpdating is
         }
     }
 
-    function whitelistToken(IERC20 token, bool whitelist) external onlyRole(WHITELIST_MAINTAINER) {
+    function whitelistToken(IERC20 token, bool whitelist) external onlyRole(Roles.WHITELIST_MAINTAINER) {
         if (whitelistedTokens[token] != whitelist) {
             whitelistedTokens[token] = whitelist;
 
@@ -153,14 +146,14 @@ contract IncentivizedUpdating is
     }
 
     /*
-     * External functions - ADMIN_ROLE - token holdings
+     * External functions - ADMIN - token holdings
      */
 
     function transferToken(
         IERC20 token,
         address recipient,
         uint256 amount
-    ) external onlyRole(ADMIN_ROLE) nonReentrant {
+    ) external onlyRole(Roles.ADMIN) nonReentrant {
         if (isCompensationToken[token]) {
             // The token is a compensation token so we must ensure we aren't transferring more than we owe
 
@@ -185,7 +178,7 @@ contract IncentivizedUpdating is
         IERC20 token,
         IERC20 compensationToken,
         uint256 amountPerLitreGas
-    ) external onlyRole(INCENTIVE_MAINTAINER) {
+    ) external onlyRole(Roles.INCENTIVE_MAINTAINER) {
         require(!_incentiveExists(token, compensationToken), "IncentivizedUpdating: INCENTIVE_ALREADY_EXISTS");
         require(amountPerLitreGas > 0, "IncentivizedUpdating: INVALID_INPUT");
 
@@ -212,7 +205,7 @@ contract IncentivizedUpdating is
         IERC20 token,
         IERC20 compensationToken,
         uint256 amountPerLitreGas
-    ) external onlyRole(INCENTIVE_MAINTAINER) {
+    ) external onlyRole(Roles.INCENTIVE_MAINTAINER) {
         require(_incentiveExists(token, compensationToken), "IncentivizedUpdating: INCENTIVE_DOESNT_EXIST");
 
         Incentive storage incentive = _getIncentiveForToken(token, compensationToken);
@@ -228,7 +221,7 @@ contract IncentivizedUpdating is
         IERC20 token,
         IERC20 compensationToken,
         bool enabled
-    ) external onlyRole(INCENTIVE_MAINTAINER) {
+    ) external onlyRole(Roles.INCENTIVE_MAINTAINER) {
         require(_incentiveExists(token, compensationToken), "IncentivizedUpdating: INCENTIVE_DOESNT_EXIST");
 
         if (enabled) {
@@ -246,7 +239,10 @@ contract IncentivizedUpdating is
         emit ToggledIncentive(token, compensationToken, enabled);
     }
 
-    function removeIncentiveForToken(IERC20 token, IERC20 compensationToken) external onlyRole(INCENTIVE_MAINTAINER) {
+    function removeIncentiveForToken(IERC20 token, IERC20 compensationToken)
+        external
+        onlyRole(Roles.INCENTIVE_MAINTAINER)
+    {
         require(_incentiveExists(token, compensationToken), "IncentivizedUpdating: INCENTIVE_DOESNT_EXIST");
 
         // Copy current incentives into memory
@@ -464,5 +460,5 @@ contract IncentivizedUpdating is
         revert("IncentivizedUpdating: INCENTIVE_DOESNT_EXIST");
     }
 
-    function _authorizeUpgrade(address) internal override onlyRole(SUPER_ROLE) {}
+    function _authorizeUpgrade(address) internal override onlyRole(Roles.SUPER) {}
 }
