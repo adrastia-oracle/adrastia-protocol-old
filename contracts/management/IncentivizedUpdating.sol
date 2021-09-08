@@ -104,13 +104,30 @@ contract IncentivizedUpdating is
     event UpdatedWhitelistedToken(IERC20 indexed token, bool whitelisted);
 
     /*
-     * Initializers
+     * Constructors and initializers
      */
 
-    function initialize() public initializer {
+    function initialize(
+        address superUser,
+        address admin,
+        address whitelister,
+        address incentiveMaintainer
+    ) public initializer {
         __AccessControl_init();
         __ReentrancyGuard_init();
         __UUPSUpgradeable_init();
+
+        // Set up administration roles
+        _setRoleAdmin(SUPER_ROLE, SUPER_ROLE);
+        _setRoleAdmin(ADMIN_ROLE, SUPER_ROLE);
+        _setRoleAdmin(INCENTIVE_MAINTAINER, ADMIN_ROLE);
+        _setRoleAdmin(WHITELIST_MAINTAINER, ADMIN_ROLE);
+
+        // Setup roles
+        _setupRole(SUPER_ROLE, superUser);
+        _setupRole(ADMIN_ROLE, admin);
+        _setupRole(INCENTIVE_MAINTAINER, whitelister);
+        _setupRole(WHITELIST_MAINTAINER, incentiveMaintainer);
 
         version = 1;
     }
