@@ -105,7 +105,7 @@ contract GovernorGeneral is
     function supportsInterface(bytes4 interfaceId)
         public
         view
-        override(GovernorUpgradeable, GovernorTimelockControlUpgradeable, AccessControlUpgradeable)
+        override(GovernorUpgradeable, GovernorTimelockControlUpgradeable, AccessControlEnumerableUpgradeable)
         returns (bool)
     {
         return super.supportsInterface(interfaceId);
