@@ -8,8 +8,10 @@ import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/cryptography/draft-EIP712Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/TimersUpgradeable.sol";
-import "./IGovernorUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/access/IAccessControlEnumerableUpgradeable.sol";
+
+import "./IGovernorUpgradeable.sol";
 
 /**
  * @dev Core of the governance system, designed to be extended though various modules.
@@ -27,7 +29,8 @@ abstract contract GovernorUpgradeable is
     ContextUpgradeable,
     ERC165Upgradeable,
     EIP712Upgradeable,
-    IGovernorUpgradeable
+    IGovernorUpgradeable,
+    IAccessControlEnumerableUpgradeable
 {
     using SafeCastUpgradeable for uint256;
     using TimersUpgradeable for TimersUpgradeable.BlockNumber;

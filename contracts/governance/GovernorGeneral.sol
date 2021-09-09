@@ -6,7 +6,7 @@ import "@openzeppelin/contracts-upgradeable/governance/extensions/GovernorCounti
 import "@openzeppelin/contracts-upgradeable/governance/extensions/GovernorVotesUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/governance/extensions/GovernorTimelockControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/AccessControlEnumerableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 import "./Roles.sol";
@@ -17,7 +17,7 @@ contract GovernorGeneral is
     GovernorCountingSimpleUpgradeable,
     GovernorVotesUpgradeable,
     GovernorTimelockControlUpgradeable,
-    AccessControlUpgradeable,
+    AccessControlEnumerableUpgradeable,
     UUPSUpgradeable
 {
     function initialize(ERC20VotesUpgradeable _token, TimelockControllerUpgradeable _timelock) public initializer {
@@ -25,7 +25,7 @@ contract GovernorGeneral is
         __GovernorCountingSimple_init();
         __GovernorVotes_init(_token);
         __GovernorTimelockControl_init(_timelock);
-        __AccessControl_init();
+        __AccessControlEnumerable_init();
         __UUPSUpgradeable_init();
     }
 
