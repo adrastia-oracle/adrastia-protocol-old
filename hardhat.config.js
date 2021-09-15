@@ -41,4 +41,7 @@ module.exports = {
             },
         },
     },
+    namedAccounts: {
+        deployer: 0,
+    }
 };
