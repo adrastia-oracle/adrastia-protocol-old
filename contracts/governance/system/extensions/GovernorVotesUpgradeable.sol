@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.0;
+pragma solidity ^0.8;
 
 import "../GovernorUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20VotesUpgradeable.sol";
@@ -29,12 +29,7 @@ abstract contract GovernorVotesUpgradeable is Initializable, GovernorUpgradeable
     /**
      * Read the voting weight from the token's built in snapshot mechanism (see {IGovernor-getVotes}).
      */
-    function getVotes(
-        address account,
-        uint256 blockNumber,
-        bytes32 roleHash,
-        uint256 voteType
-    ) public view virtual override returns (uint256) {
+    function getVotes(address account, uint256 blockNumber) public view virtual override returns (uint256) {
         return token.getPastVotes(account, blockNumber);
     }
 

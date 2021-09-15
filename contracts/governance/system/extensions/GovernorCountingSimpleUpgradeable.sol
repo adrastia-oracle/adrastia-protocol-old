@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.0;
+pragma solidity ^0.8;
 
 import "../GovernorUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
@@ -42,13 +42,7 @@ abstract contract GovernorCountingSimpleUpgradeable is Initializable, GovernorUp
      * @dev See {IGovernor-COUNTING_MODE}.
      */
     // solhint-disable-next-line func-name-mixedcase
-    function COUNTING_MODE(string memory executionRole, uint256 voteType)
-        public
-        pure
-        virtual
-        override
-        returns (string memory)
-    {
+    function COUNTING_MODE() public pure virtual override returns (string memory) {
         return "support=bravo&quorum=for,abstain";
     }
 
@@ -79,26 +73,16 @@ abstract contract GovernorCountingSimpleUpgradeable is Initializable, GovernorUp
     /**
      * @dev See {Governor-_quorumReached}.
      */
-    function _quorumReached(
-        uint256 proposalId,
-        bytes32 roleHash,
-        uint256 voteType
-    ) internal view virtual override returns (bool) {
+    function _quorumReached(uint256 proposalId) internal view virtual override returns (bool) {
         ProposalVote storage proposalvote = _proposalVotes[proposalId];
 
-        return
-            quorum(proposalSnapshot(proposalId), roleHash, voteType) <=
-            proposalvote.forVotes + proposalvote.abstainVotes;
+        return quorum(proposalSnapshot(proposalId)) <= proposalvote.forVotes + proposalvote.abstainVotes;
     }
 
     /**
      * @dev See {Governor-_voteSucceeded}. In this module, the forVotes must be scritly over the againstVotes.
      */
-    function _voteSucceeded(
-        uint256 proposalId,
-        bytes32 roleHash,
-        uint256 voteType
-    ) internal view virtual override returns (bool) {
+    function _voteSucceeded(uint256 proposalId) internal view virtual override returns (bool) {
         ProposalVote storage proposalvote = _proposalVotes[proposalId];
 
         return proposalvote.forVotes > proposalvote.againstVotes;
@@ -110,7 +94,7 @@ abstract contract GovernorCountingSimpleUpgradeable is Initializable, GovernorUp
     function _countVote(
         uint256 proposalId,
         address account,
-        uint256 option,
+        uint8 support,
         uint256 weight
     ) internal virtual override {
         ProposalVote storage proposalvote = _proposalVotes[proposalId];
@@ -118,11 +102,11 @@ abstract contract GovernorCountingSimpleUpgradeable is Initializable, GovernorUp
         require(!proposalvote.hasVoted[account], "GovernorVotingSimple: vote already cast");
         proposalvote.hasVoted[account] = true;
 
-        if (option == uint8(VoteType.Against)) {
+        if (support == uint8(VoteType.Against)) {
             proposalvote.againstVotes += weight;
-        } else if (option == uint8(VoteType.For)) {
+        } else if (support == uint8(VoteType.For)) {
             proposalvote.forVotes += weight;
-        } else if (option == uint8(VoteType.Abstain)) {
+        } else if (support == uint8(VoteType.Abstain)) {
             proposalvote.abstainVotes += weight;
         } else {
             revert("GovernorVotingSimple: invalid value for enum VoteType");

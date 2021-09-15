@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.0;
+pragma solidity ^0.8;
 
 import "./GovernorVotesUpgradeable.sol";
-import "../GovernorRoles.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 /**
@@ -36,15 +35,11 @@ abstract contract GovernorVotesQuorumFractionUpgradeable is Initializable, Gover
         return 100;
     }
 
-    function quorum(
-        uint256 blockNumber,
-        bytes32 roleHash,
-        uint256 voteType
-    ) public view virtual override returns (uint256) {
+    function quorum(uint256 blockNumber) public view virtual override returns (uint256) {
         return (token.getPastTotalSupply(blockNumber) * quorumNumerator()) / quorumDenominator();
     }
 
-    function updateQuorumNumerator(uint256 newQuorumNumerator) external virtual onlyExecutionRole(GovernorRoles.SUPER) {
+    function updateQuorumNumerator(uint256 newQuorumNumerator) external virtual onlyGovernance {
         _updateQuorumNumerator(newQuorumNumerator);
     }
 

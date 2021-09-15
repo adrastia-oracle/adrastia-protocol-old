@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.0;
+pragma solidity ^0.8;
 
 import "../IGovernorUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
@@ -28,9 +28,7 @@ abstract contract IGovernorTimelockUpgradeable is Initializable, IGovernorUpgrad
         address[] memory targets,
         uint256[] memory values,
         bytes[] memory calldatas,
-        bytes32 descriptionHash,
-        bytes32 roleHash,
-        uint256 voteType
+        bytes32 descriptionHash
     ) public virtual returns (uint256 proposalId);
 
     uint256[50] private __gap;

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.0;
+pragma solidity ^0.8;
 
 import "../GovernorUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
@@ -27,16 +27,14 @@ abstract contract GovernorProposalThresholdUpgradeable is Initializable, Governo
         address[] memory targets,
         uint256[] memory values,
         bytes[] memory calldatas,
-        string memory description,
-        string memory executionRole,
-        uint256 voteType
+        string memory description
     ) public virtual override returns (uint256) {
         require(
-            getVotes(msg.sender, block.number - 1, keccak256(bytes(executionRole)), voteType) >= proposalThreshold(),
+            getVotes(msg.sender, block.number - 1) >= proposalThreshold(),
             "GovernorCompatibilityBravo: proposer votes below proposal threshold"
         );
 
-        return super.propose(targets, values, calldatas, description, executionRole, voteType);
+        return super.propose(targets, values, calldatas, description);
     }
 
     /**

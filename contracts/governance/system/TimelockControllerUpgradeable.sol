@@ -1,11 +1,9 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.0;
+pragma solidity ^0.8;
 
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-
-import "./GovernorRoles.sol";
 
 /**
  * @dev Contract module which acts as a timelocked controller. When set as the
@@ -23,6 +21,9 @@ import "./GovernorRoles.sol";
  * _Available since v3.3._
  */
 contract TimelockControllerUpgradeable is Initializable, AccessControlUpgradeable {
+    bytes32 public constant TIMELOCK_ADMIN_ROLE = keccak256("TIMELOCK_ADMIN_ROLE");
+    bytes32 public constant PROPOSER_ROLE = keccak256("PROPOSER_ROLE");
+    bytes32 public constant EXECUTOR_ROLE = keccak256("EXECUTOR_ROLE");
     uint256 internal constant _DONE_TIMESTAMP = uint256(1);
 
     mapping(bytes32 => uint256) private _timestamps;
@@ -75,22 +76,22 @@ contract TimelockControllerUpgradeable is Initializable, AccessControlUpgradeabl
         address[] memory proposers,
         address[] memory executors
     ) internal initializer {
-        _setRoleAdmin(GovernorRoles.TIMELOCK_ADMIN, GovernorRoles.TIMELOCK_ADMIN);
-        _setRoleAdmin(GovernorRoles.TIMELOCK_PROPOSER, GovernorRoles.TIMELOCK_ADMIN);
-        _setRoleAdmin(GovernorRoles.TIMELOCK_EXECUTOR, GovernorRoles.TIMELOCK_ADMIN);
+        _setRoleAdmin(TIMELOCK_ADMIN_ROLE, TIMELOCK_ADMIN_ROLE);
+        _setRoleAdmin(PROPOSER_ROLE, TIMELOCK_ADMIN_ROLE);
+        _setRoleAdmin(EXECUTOR_ROLE, TIMELOCK_ADMIN_ROLE);
 
         // deployer + self administration
-        _setupRole(GovernorRoles.TIMELOCK_ADMIN, _msgSender());
-        _setupRole(GovernorRoles.TIMELOCK_ADMIN, address(this));
+        _setupRole(TIMELOCK_ADMIN_ROLE, _msgSender());
+        _setupRole(TIMELOCK_ADMIN_ROLE, address(this));
 
         // register proposers
         for (uint256 i = 0; i < proposers.length; ++i) {
-            _setupRole(GovernorRoles.TIMELOCK_PROPOSER, proposers[i]);
+            _setupRole(PROPOSER_ROLE, proposers[i]);
         }
 
         // register executors
         for (uint256 i = 0; i < executors.length; ++i) {
-            _setupRole(GovernorRoles.TIMELOCK_EXECUTOR, executors[i]);
+            _setupRole(EXECUTOR_ROLE, executors[i]);
         }
 
         _minDelay = minDelay;
@@ -206,7 +207,7 @@ contract TimelockControllerUpgradeable is Initializable, AccessControlUpgradeabl
         bytes32 predecessor,
         bytes32 salt,
         uint256 delay
-    ) public virtual onlyRole(GovernorRoles.TIMELOCK_PROPOSER) {
+    ) public virtual onlyRole(PROPOSER_ROLE) {
         bytes32 id = hashOperation(target, value, data, predecessor, salt);
         _schedule(id, delay);
         emit CallScheduled(id, 0, target, value, data, predecessor, delay);
@@ -228,7 +229,7 @@ contract TimelockControllerUpgradeable is Initializable, AccessControlUpgradeabl
         bytes32 predecessor,
         bytes32 salt,
         uint256 delay
-    ) public virtual onlyRole(GovernorRoles.TIMELOCK_PROPOSER) {
+    ) public virtual onlyRole(PROPOSER_ROLE) {
         require(targets.length == values.length, "TimelockController: length mismatch");
         require(targets.length == datas.length, "TimelockController: length mismatch");
 
@@ -255,7 +256,7 @@ contract TimelockControllerUpgradeable is Initializable, AccessControlUpgradeabl
      *
      * - the caller must have the 'proposer' role.
      */
-    function cancel(bytes32 id) public virtual onlyRole(GovernorRoles.TIMELOCK_PROPOSER) {
+    function cancel(bytes32 id) public virtual onlyRole(PROPOSER_ROLE) {
         require(isOperationPending(id), "TimelockController: operation cannot be cancelled");
         delete _timestamps[id];
 
@@ -277,7 +278,7 @@ contract TimelockControllerUpgradeable is Initializable, AccessControlUpgradeabl
         bytes calldata data,
         bytes32 predecessor,
         bytes32 salt
-    ) public payable virtual onlyRoleOrOpenRole(GovernorRoles.TIMELOCK_EXECUTOR) {
+    ) public payable virtual onlyRoleOrOpenRole(EXECUTOR_ROLE) {
         bytes32 id = hashOperation(target, value, data, predecessor, salt);
         _beforeCall(id, predecessor);
         _call(id, 0, target, value, data);
@@ -299,7 +300,7 @@ contract TimelockControllerUpgradeable is Initializable, AccessControlUpgradeabl
         bytes[] calldata datas,
         bytes32 predecessor,
         bytes32 salt
-    ) public payable virtual onlyRoleOrOpenRole(GovernorRoles.TIMELOCK_EXECUTOR) {
+    ) public payable virtual onlyRoleOrOpenRole(EXECUTOR_ROLE) {
         require(targets.length == values.length, "TimelockController: length mismatch");
         require(targets.length == datas.length, "TimelockController: length mismatch");
 
