@@ -4,12 +4,12 @@ pragma solidity ^0.8;
 import "@pythia-oracle/pythia-library/contracts/interfaces/IUpdateByToken.sol";
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-
-import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 import "../governance/Roles.sol";
 import "../upgrades/VersionedUpgrade.sol";
+import "../access/RoleConsumer.sol";
+import "../access/IRoleManager.sol";
 
 contract IncentivizedUpdatingStorageV1 {
     struct Incentive {
@@ -22,6 +22,8 @@ contract IncentivizedUpdatingStorageV1 {
     uint256[64] private __gap;
 
     uint256 internal _version;
+
+    IRoleManager internal _roleManager;
 
     /*
      * Whitelists
@@ -89,7 +91,7 @@ contract IncentivizedUpdatingStorageV1 {
     event UpdatedWhitelistedToken(IERC20 indexed token, bool whitelisted);
 }
 
-contract IncentivizedUpdating is AccessControl, ReentrancyGuard, VersionedUpgrade, IncentivizedUpdatingStorageV1 {
+contract IncentivizedUpdating is RoleConsumer, ReentrancyGuard, VersionedUpgrade, IncentivizedUpdatingStorageV1 {
     uint256 private constant VERSION = 1;
 
     /*
@@ -97,25 +99,9 @@ contract IncentivizedUpdating is AccessControl, ReentrancyGuard, VersionedUpgrad
      */
 
     /// @dev Notice: Storage changes here only affect the logic contract.
-    constructor(
-        address superUser,
-        address admin,
-        address whitelister,
-        address incentiveMaintainer
-    ) {
-        // Set up administration roles
-        _setRoleAdmin(Roles.SUPER, Roles.SUPER);
-        _setRoleAdmin(Roles.ADMIN, Roles.SUPER);
-        _setRoleAdmin(Roles.INCENTIVE_MAINTAINER, Roles.ADMIN);
-        _setRoleAdmin(Roles.WHITELIST_MAINTAINER, Roles.ADMIN);
-
-        // Setup roles
-        _setupRole(Roles.SUPER, superUser);
-        _setupRole(Roles.ADMIN, admin);
-        _setupRole(Roles.INCENTIVE_MAINTAINER, whitelister);
-        _setupRole(Roles.WHITELIST_MAINTAINER, incentiveMaintainer);
-
+    constructor(IRoleManager roleManager_) {
         _version = VERSION;
+        _roleManager = roleManager_;
     }
 
     /*
@@ -367,6 +353,10 @@ contract IncentivizedUpdating is AccessControl, ReentrancyGuard, VersionedUpgrad
      */
     function version() public view virtual override returns (uint256) {
         return _version;
+    }
+
+    function roleManager() public view virtual override returns (IRoleManager) {
+        return _roleManager;
     }
 
     /*
