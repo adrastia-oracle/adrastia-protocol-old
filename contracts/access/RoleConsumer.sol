@@ -6,6 +6,11 @@ import "@openzeppelin/contracts/access/IAccessControlEnumerable.sol";
 import "./RoleManager.sol";
 
 abstract contract RoleConsumer is IAccessControlEnumerable {
+    modifier onlyRole(bytes32 role) {
+        _checkRole(role, msg.sender);
+        _;
+    }
+
     function permissionManager() public view virtual returns (RoleManager);
 
     function getRoleMember(bytes32 role, uint256 index) public view override returns (address) {
@@ -43,5 +48,20 @@ abstract contract RoleConsumer is IAccessControlEnumerable {
         address /*account*/
     ) external pure override {
         revert("RoleConsumer: READ_ONLY");
+    }
+
+    function _checkRole(bytes32 role, address account) internal view {
+        if (!hasRole(role, account)) {
+            revert(
+                string(
+                    abi.encodePacked(
+                        "RoleConsumer: UNAUTHORIZED - account ",
+                        Strings.toHexString(uint160(account), 20),
+                        " is missing role ",
+                        Strings.toHexString(uint256(role), 32)
+                    )
+                )
+            );
+        }
     }
 }
