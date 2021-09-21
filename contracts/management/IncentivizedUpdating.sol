@@ -5,11 +5,11 @@ import "@pythia-oracle/pythia-library/contracts/interfaces/IUpdateByToken.sol";
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 import "../governance/Roles.sol";
+import "../upgrades/VersionedUpgrade.sol";
 
 contract IncentivizedUpdatingStorageV1 {
     struct Incentive {
@@ -19,7 +19,7 @@ contract IncentivizedUpdatingStorageV1 {
         uint256 amountPerLitreGas;
     }
 
-    uint256 version;
+    uint256 internal _version;
 
     /*
      * Whitelists
@@ -87,27 +87,20 @@ contract IncentivizedUpdatingStorageV1 {
     event UpdatedWhitelistedToken(IERC20 indexed token, bool whitelisted);
 }
 
-contract IncentivizedUpdating is
-    Initializable,
-    AccessControlUpgradeable,
-    ReentrancyGuardUpgradeable,
-    UUPSUpgradeable,
-    IncentivizedUpdatingStorageV1
-{
+contract IncentivizedUpdating is AccessControl, ReentrancyGuard, VersionedUpgrade, IncentivizedUpdatingStorageV1 {
+    uint256 private constant VERSION = 1;
+
     /*
      * Constructors and initializers
      */
 
-    function initialize(
+    /// @dev Notice: Storage changes here only affect the logic contract.
+    constructor(
         address superUser,
         address admin,
         address whitelister,
         address incentiveMaintainer
-    ) public initializer {
-        __AccessControl_init();
-        __ReentrancyGuard_init();
-        __UUPSUpgradeable_init();
-
+    ) {
         // Set up administration roles
         _setRoleAdmin(Roles.SUPER, Roles.SUPER);
         _setRoleAdmin(Roles.ADMIN, Roles.SUPER);
@@ -120,7 +113,7 @@ contract IncentivizedUpdating is
         _setupRole(Roles.INCENTIVE_MAINTAINER, whitelister);
         _setupRole(Roles.WHITELIST_MAINTAINER, incentiveMaintainer);
 
-        version = 1;
+        _version = VERSION;
     }
 
     /*
@@ -368,6 +361,13 @@ contract IncentivizedUpdating is
     }
 
     /*
+     * Public functions
+     */
+    function version() public view virtual override returns (uint256) {
+        return _version;
+    }
+
+    /*
      * Internal functions
      */
 
@@ -460,6 +460,10 @@ contract IncentivizedUpdating is
 
         revert("IncentivizedUpdating: INCENTIVE_DOESNT_EXIST");
     }
+
+    /*
+     * Internal functions - upgrades
+     */
 
     function _authorizeUpgrade(address) internal override onlyRole(Roles.SUPER) {}
 }
