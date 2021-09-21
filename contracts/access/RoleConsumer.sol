@@ -3,7 +3,7 @@ pragma solidity ^0.8;
 
 import "@openzeppelin/contracts/access/IAccessControlEnumerable.sol";
 
-import "./RoleManager.sol";
+import "./IRoleManager.sol";
 
 abstract contract RoleConsumer is IAccessControlEnumerable {
     modifier onlyRole(bytes32 role) {
@@ -11,7 +11,7 @@ abstract contract RoleConsumer is IAccessControlEnumerable {
         _;
     }
 
-    function roleManager() public view virtual returns (RoleManager);
+    function roleManager() public view virtual returns (IRoleManager);
 
     function getRoleMember(bytes32 role, uint256 index) public view override returns (address) {
         return roleManager().getRoleMember(role, index);
