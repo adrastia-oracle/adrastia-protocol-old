@@ -19,6 +19,8 @@ contract IncentivizedUpdatingStorageV1 {
         uint256 amountPerLitreGas;
     }
 
+    uint256[64] private __gap;
+
     uint256 internal _version;
 
     /*
@@ -466,4 +468,6 @@ contract IncentivizedUpdating is AccessControl, ReentrancyGuard, VersionedUpgrad
      */
 
     function _authorizeUpgrade(address) internal override onlyRole(Roles.SUPER) {}
+
+    function handleUpgrade(uint256 fromVersion, uint256 toVersion) internal virtual override {}
 }
