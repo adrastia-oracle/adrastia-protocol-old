@@ -14,6 +14,7 @@ import "../governance/Roles.sol";
 contract IncentivizedUpdatingStorageV1 {
     struct Incentive {
         bool enabled;
+        bool amountLimit; // TODO
         IERC20 compensationToken;
         uint256 amountPerLitreGas;
     }
